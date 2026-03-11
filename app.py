@@ -4,14 +4,28 @@ import matplotlib.pyplot as plt
 import google.generativeai as genai
 
 # =============================
-# CONFIG
+# READ API KEY FROM .env
 # =============================
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+def load_api_key():
+    try:
+        with open(".env") as f:
+            for line in f:
+                if line.startswith("GEMINI_API_KEY"):
+                    return line.strip().split("=")[1]
+    except FileNotFoundError:
+        st.error(".env file not found")
+        st.stop()
+
+GEMINI_API_KEY = load_api_key()
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+# =============================
+# STREAMLIT UI
+# =============================
 
 st.set_page_config(page_title="Talking Rabbitt", page_icon="🐰")
 
@@ -19,10 +33,6 @@ st.title("🐰 Talking Rabbitt")
 st.subheader("Conversational Intelligence for Your Data")
 
 st.markdown("Upload a dataset and ask questions about it.")
-
-# =============================
-# FILE UPLOAD
-# =============================
 
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
@@ -37,17 +47,11 @@ if uploaded_file:
 
     st.write("Rows:", df.shape[0], "Columns:", df.shape[1])
 
-    st.subheader("Ask a Question")
-
     question = st.text_input(
         "Example: Which region had the highest revenue?"
     )
 
     if question:
-
-        # =============================
-        # LLM ANALYSIS
-        # =============================
 
         prompt = f"""
 You are a data analyst.
@@ -61,9 +65,7 @@ Sample data:
 User question:
 {question}
 
-1. Answer the question clearly.
-2. Suggest what chart would best represent the answer.
-3. Respond in short business-friendly language.
+Answer clearly in short business language.
 """
 
         response = model.generate_content(prompt)
@@ -71,12 +73,7 @@ User question:
         answer = response.text
 
         st.subheader("AI Insight")
-
         st.success(answer)
-
-        # =============================
-        # AUTOMATIC VISUALIZATION
-        # =============================
 
         st.subheader("Visualization")
 
@@ -88,18 +85,9 @@ User question:
             x_col = categorical_cols[0]
             y_col = numeric_cols[0]
 
-            chart_type = st.selectbox(
-                "Select Chart Type",
-                ["Bar Chart", "Line Chart"]
-            )
-
             fig, ax = plt.subplots()
 
-            if chart_type == "Bar Chart":
-                df.groupby(x_col)[y_col].sum().plot(kind="bar", ax=ax)
-
-            elif chart_type == "Line Chart":
-                df.groupby(x_col)[y_col].sum().plot(kind="line", ax=ax)
+            df.groupby(x_col)[y_col].sum().plot(kind="bar", ax=ax)
 
             ax.set_xlabel(x_col)
             ax.set_ylabel(y_col)
@@ -108,4 +96,4 @@ User question:
             st.pyplot(fig)
 
         else:
-            st.warning("Dataset needs both numeric and categorical columns for visualization.")
+            st.warning("Dataset needs both numeric and categorical columns.")
