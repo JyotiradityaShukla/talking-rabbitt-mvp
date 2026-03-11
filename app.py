@@ -4,20 +4,10 @@ import matplotlib.pyplot as plt
 import google.generativeai as genai
 
 # =============================
-# READ API KEY FROM .env
+# HARD CODED API KEY
 # =============================
 
-def load_api_key():
-    try:
-        with open(".env") as f:
-            for line in f:
-                if line.startswith("GEMINI_API_KEY"):
-                    return line.strip().split("=")[1]
-    except FileNotFoundError:
-        st.error(".env file not found")
-        st.stop()
-
-GEMINI_API_KEY = load_api_key()
+GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
 
 genai.configure(api_key=GEMINI_API_KEY)
 
